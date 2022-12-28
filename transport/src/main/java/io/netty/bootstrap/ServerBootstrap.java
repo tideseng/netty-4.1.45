@@ -45,13 +45,13 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ServerBootstrap.class);
 
-    private final Map<ChannelOption<?>, Object> childOptions = new ConcurrentHashMap<ChannelOption<?>, Object>();
+    private final Map<ChannelOption<?>, Object> childOptions = new ConcurrentHashMap<ChannelOption<?>, Object>(); // worker的参数map
     private final Map<AttributeKey<?>, Object> childAttrs = new ConcurrentHashMap<AttributeKey<?>, Object>();
     private final ServerBootstrapConfig config = new ServerBootstrapConfig(this);
-    private volatile EventLoopGroup childGroup;
-    private volatile ChannelHandler childHandler;
+    private volatile EventLoopGroup childGroup; // worker
+    private volatile ChannelHandler childHandler; // worker的ChannelHandler
 
-    public ServerBootstrap() { }
+    public ServerBootstrap() { } // 实例化ServerBootstrap
 
     private ServerBootstrap(ServerBootstrap bootstrap) {
         super(bootstrap);
@@ -74,13 +74,13 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      * {@link EventLoopGroup}'s are used to handle all the events and IO for {@link ServerChannel} and
      * {@link Channel}'s.
      */
-    public ServerBootstrap group(EventLoopGroup parentGroup, EventLoopGroup childGroup) {
-        super.group(parentGroup);
+    public ServerBootstrap group(EventLoopGroup parentGroup, EventLoopGroup childGroup) { // 设置EventLoopGroup
+        super.group(parentGroup); // 设置boss对应的EventLoopGroup
         if (this.childGroup != null) {
             throw new IllegalStateException("childGroup set already");
         }
-        this.childGroup = ObjectUtil.checkNotNull(childGroup, "childGroup");
-        return this;
+        this.childGroup = ObjectUtil.checkNotNull(childGroup, "childGroup"); // 赋值worker对应的EventLoopGroup
+        return this; // 链式编程，返回自身
     }
 
     /**
@@ -115,13 +115,13 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     /**
      * Set the {@link ChannelHandler} which is used to serve the request for the {@link Channel}'s.
      */
-    public ServerBootstrap childHandler(ChannelHandler childHandler) {
+    public ServerBootstrap childHandler(ChannelHandler childHandler) { // 设置worker的ChannelHandler
         this.childHandler = ObjectUtil.checkNotNull(childHandler, "childHandler");
         return this;
     }
 
     @Override
-    void init(Channel channel) {
+    void init(Channel channel) { // 初始化Channel
         setChannelOptions(channel, options0().entrySet().toArray(EMPTY_OPTION_ARRAY), logger);
         setAttributes(channel, attrs0().entrySet().toArray(EMPTY_ATTRIBUTE_ARRAY));
 
@@ -133,7 +133,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 childOptions.entrySet().toArray(EMPTY_OPTION_ARRAY);
         final Entry<AttributeKey<?>, Object>[] currentChildAttrs = childAttrs.entrySet().toArray(EMPTY_ATTRIBUTE_ARRAY);
 
-        p.addLast(new ChannelInitializer<Channel>() {
+        p.addLast(new ChannelInitializer<Channel>() { // 给ServerSocketChannel中的ChannelPipeline添加ChannelHandler元素
             @Override
             public void initChannel(final Channel ch) {
                 final ChannelPipeline pipeline = ch.pipeline();
