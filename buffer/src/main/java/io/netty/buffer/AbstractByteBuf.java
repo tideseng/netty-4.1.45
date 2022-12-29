@@ -283,10 +283,10 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return this;
     }
 
-    final void ensureWritable0(int minWritableBytes) {
+    final void ensureWritable0(int minWritableBytes) { // 确保能写
         final int writerIndex = writerIndex();
         final int targetCapacity = writerIndex + minWritableBytes;
-        if (targetCapacity <= capacity()) {
+        if (targetCapacity <= capacity()) { // 容量足够，可以直接写
             ensureAccessible();
             return;
         }
@@ -300,7 +300,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         // Normalize the target capacity to the power of 2.
         final int fastWritable = maxFastWritableBytes();
         int newCapacity = fastWritable >= minWritableBytes ? writerIndex + fastWritable
-                : alloc().calculateNewCapacity(targetCapacity, maxCapacity);
+                : alloc().calculateNewCapacity(targetCapacity, maxCapacity); // 扩容
 
         // Adjust to the new capacity.
         capacity(newCapacity);
@@ -1020,8 +1020,8 @@ public abstract class AbstractByteBuf extends ByteBuf {
     }
 
     @Override
-    public ByteBuf writeInt(int value) {
-        ensureWritable0(4);
+    public ByteBuf writeInt(int value) { // 写int
+        ensureWritable0(4); // 确保能写
         _setInt(writerIndex, value);
         writerIndex += 4;
         return this;

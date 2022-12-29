@@ -134,9 +134,9 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
     }
 
     @Override
-    public ByteBuf ioBuffer(int initialCapacity) {
+    public ByteBuf ioBuffer(int initialCapacity) { // 分配内存
         if (PlatformDependent.hasUnsafe() || isDirectBufferPooled()) {
-            return directBuffer(initialCapacity);
+            return directBuffer(initialCapacity); // 分配堆外内存/直接内存
         }
         return heapBuffer(initialCapacity);
     }
@@ -248,21 +248,21 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
     }
 
     @Override
-    public int calculateNewCapacity(int minNewCapacity, int maxCapacity) {
+    public int calculateNewCapacity(int minNewCapacity, int maxCapacity) { // 扩容
         checkPositiveOrZero(minNewCapacity, "minNewCapacity");
         if (minNewCapacity > maxCapacity) {
             throw new IllegalArgumentException(String.format(
                     "minNewCapacity: %d (expected: not greater than maxCapacity(%d)",
                     minNewCapacity, maxCapacity));
         }
-        final int threshold = CALCULATE_THRESHOLD; // 4 MiB page
+        final int threshold = CALCULATE_THRESHOLD; // 4 MiB page // 阈值为4M
 
         if (minNewCapacity == threshold) {
             return threshold;
         }
 
         // If over threshold, do not double but just increase by threshold.
-        if (minNewCapacity > threshold) {
+        if (minNewCapacity > threshold) { // 超过阈值时，不再翻倍，而是加4M
             int newCapacity = minNewCapacity / threshold * threshold;
             if (newCapacity > maxCapacity - threshold) {
                 newCapacity = maxCapacity;
@@ -273,9 +273,9 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
         }
 
         // Not over threshold. Double up to 4 MiB, starting from 64.
-        int newCapacity = 64;
+        int newCapacity = 64; // 不超过阈值时，先指定容量为64，翻倍扩容
         while (newCapacity < minNewCapacity) {
-            newCapacity <<= 1;
+            newCapacity <<= 1; // 扩容2倍
         }
 
         return Math.min(newCapacity, maxCapacity);
