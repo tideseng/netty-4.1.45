@@ -47,11 +47,11 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
                              implements io.netty.channel.socket.ServerSocketChannel {
 
     private static final ChannelMetadata METADATA = new ChannelMetadata(false, 16);
-    private static final SelectorProvider DEFAULT_SELECTOR_PROVIDER = SelectorProvider.provider();
+    private static final SelectorProvider DEFAULT_SELECTOR_PROVIDER = SelectorProvider.provider(); // 获取操作系统对应的SelectorProvider
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioServerSocketChannel.class);
 
-    private static ServerSocketChannel newSocket(SelectorProvider provider) {
+    private static ServerSocketChannel newSocket(SelectorProvider provider) { // 创建ServerSocketChannelImpl
         try {
             /**
              *  Use the {@link SelectorProvider} to open {@link SocketChannel} and so remove condition in
@@ -59,7 +59,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
              *
              *  See <a href="https://github.com/netty/netty/issues/2308">#2308</a>.
              */
-            return provider.openServerSocketChannel();
+            return provider.openServerSocketChannel(); // 调用nio的openServerSocketChannel方法创建ServerSocketChannel
         } catch (IOException e) {
             throw new ChannelException(
                     "Failed to open a server socket.", e);
@@ -71,8 +71,8 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     /**
      * Create a new instance
      */
-    public NioServerSocketChannel() {
-        this(newSocket(DEFAULT_SELECTOR_PROVIDER));
+    public NioServerSocketChannel() { // 通过反射调用
+        this(newSocket(DEFAULT_SELECTOR_PROVIDER)); // 先创建ServerSocketChannelImpl，再实例化NioServerSocketChannel
     }
 
     /**
@@ -85,8 +85,8 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     /**
      * Create a new instance using the given {@link ServerSocketChannel}.
      */
-    public NioServerSocketChannel(ServerSocketChannel channel) {
-        super(null, channel, SelectionKey.OP_ACCEPT);
+    public NioServerSocketChannel(ServerSocketChannel channel) { // 实例化NioServerSocketChannel
+        super(null, channel, SelectionKey.OP_ACCEPT); // 注入ServerSocketChannel、客户端与服务端的连接事件
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }
 
@@ -143,12 +143,12 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     }
 
     @Override
-    protected int doReadMessages(List<Object> buf) throws Exception {
-        SocketChannel ch = SocketUtils.accept(javaChannel());
+    protected int doReadMessages(List<Object> buf) throws Exception { // 处理消息
+        SocketChannel ch = SocketUtils.accept(javaChannel()); // 调用nio的ServerSocketChannel#accept方法
 
         try {
             if (ch != null) {
-                buf.add(new NioSocketChannel(this, ch));
+                buf.add(new NioSocketChannel(this, ch)); // 将nio的SocketChannel封装到netty的NioSocketChannel，并添加到readBuf中
                 return 1;
             }
         } catch (Throwable t) {
@@ -197,13 +197,13 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     }
 
     private final class NioServerSocketChannelConfig extends DefaultServerSocketChannelConfig {
-        private NioServerSocketChannelConfig(NioServerSocketChannel channel, ServerSocket javaSocket) {
-            super(channel, javaSocket);
-        }
-
         @Override
         protected void autoReadCleared() {
             clearReadPending();
+        }
+
+        private NioServerSocketChannelConfig(NioServerSocketChannel channel, ServerSocket javaSocket) {
+            super(channel, javaSocket);
         }
 
         @Override
