@@ -101,8 +101,8 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
      * @param parent    the {@link Channel} which created this instance or {@code null} if it was created by the user
      * @param socket    the {@link SocketChannel} which will be used
      */
-    public NioSocketChannel(Channel parent, SocketChannel socket) {
-        super(parent, socket);
+    public NioSocketChannel(Channel parent, SocketChannel socket) { // 实例化NioSocketChannel
+        super(parent, socket); // 创建AbstractNioByteChannel
         config = new NioSocketChannelConfig(this, socket.socket());
     }
 
@@ -344,10 +344,10 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
     }
 
     @Override
-    protected int doReadBytes(ByteBuf byteBuf) throws Exception {
+    protected int doReadBytes(ByteBuf byteBuf) throws Exception { // 读数据
         final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
         allocHandle.attemptedBytesRead(byteBuf.writableBytes());
-        return byteBuf.writeBytes(javaChannel(), allocHandle.attemptedBytesRead());
+        return byteBuf.writeBytes(javaChannel(), allocHandle.attemptedBytesRead()); // 将SocketChannel中的数据放到ByteBuf中
     }
 
     @Override
