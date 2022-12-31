@@ -40,16 +40,16 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
      * Create a new instance using the default number of threads, the default {@link ThreadFactory} and
      * the {@link SelectorProvider} which is returned by {@link SelectorProvider#provider()}.
      */
-    public NioEventLoopGroup() {
-        this(0);
+    public NioEventLoopGroup() { // 不指定线程数实例化NioEventLoopGroup
+        this(0); // 不指定线程数时，默认线程数为cpu核数的两倍
     }
 
     /**
      * Create a new instance using the specified number of threads, {@link ThreadFactory} and the
      * {@link SelectorProvider} which is returned by {@link SelectorProvider#provider()}.
      */
-    public NioEventLoopGroup(int nThreads) {
-        this(nThreads, (Executor) null);
+    public NioEventLoopGroup(int nThreads) { // 指定线程数实例化NioEventLoopGroup
+        this(nThreads, (Executor) null); // 线程数为0时表示不指定线程数，则默认线程数为cpu核数的两倍
     }
 
     /**
@@ -69,7 +69,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
     }
 
     public NioEventLoopGroup(int nThreads, Executor executor) {
-        this(nThreads, executor, SelectorProvider.provider());
+        this(nThreads, executor, SelectorProvider.provider()); // 先获取操作系统对应的SelectorProvider
     }
 
     /**
@@ -140,9 +140,9 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
     }
 
     @Override
-    protected EventLoop newChild(Executor executor, Object... args) throws Exception {
+    protected EventLoop newChild(Executor executor, Object... args) throws Exception { // 创建NioEventLoop，赋值定时任务线程池数组元素
         EventLoopTaskQueueFactory queueFactory = args.length == 4 ? (EventLoopTaskQueueFactory) args[3] : null;
-        return new NioEventLoop(this, executor, (SelectorProvider) args[0],
+        return new NioEventLoop(this, executor, (SelectorProvider) args[0], // 创建NioEventLoop
             ((SelectStrategyFactory) args[1]).newSelectStrategy(), (RejectedExecutionHandler) args[2], queueFactory);
     }
 }
