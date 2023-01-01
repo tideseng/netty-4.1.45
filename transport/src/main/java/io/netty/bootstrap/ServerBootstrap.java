@@ -48,7 +48,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     private final Map<ChannelOption<?>, Object> childOptions = new ConcurrentHashMap<ChannelOption<?>, Object>(); // worker的参数map
     private final Map<AttributeKey<?>, Object> childAttrs = new ConcurrentHashMap<AttributeKey<?>, Object>();
     private final ServerBootstrapConfig config = new ServerBootstrapConfig(this);
-    private volatile EventLoopGroup childGroup; // worker
+    private volatile EventLoopGroup childGroup; // worker的EventLoopGroup
     private volatile ChannelHandler childHandler; // worker的ChannelHandler
 
     public ServerBootstrap() { } // 实例化ServerBootstrap
@@ -135,7 +135,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
         p.addLast(new ChannelInitializer<Channel>() { // 给ServerSocketChannel中的ChannelPipeline添加ChannelHandler元素
             @Override
-            public void initChannel(final Channel ch) {
+            public void initChannel(final Channel ch) { // 由ChannelInitializer抽象类调用，调用完毕后会移除当前节点
                 final ChannelPipeline pipeline = ch.pipeline();
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
@@ -145,7 +145,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {
-                        pipeline.addLast(new ServerBootstrapAcceptor(
+                        pipeline.addLast(new ServerBootstrapAcceptor( // 添加ServerBootstrapAcceptor节点，注入worker的EventLoopGroup、worker的ChannelHandler、worker的ChannelOption
                                 ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs));
                     }
                 });
@@ -168,13 +168,13 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     private static class ServerBootstrapAcceptor extends ChannelInboundHandlerAdapter {
 
-        private final EventLoopGroup childGroup;
-        private final ChannelHandler childHandler;
-        private final Entry<ChannelOption<?>, Object>[] childOptions;
+        private final EventLoopGroup childGroup; // worker的EventLoopGroup
+        private final ChannelHandler childHandler; // worker的ChannelHandler
+        private final Entry<ChannelOption<?>, Object>[] childOptions; // worker的ChannelOption
         private final Entry<AttributeKey<?>, Object>[] childAttrs;
         private final Runnable enableAutoReadTask;
 
-        ServerBootstrapAcceptor(
+        ServerBootstrapAcceptor( // 实例化ServerBootstrapAcceptor，注入worker的EventLoopGroup、worker的ChannelHandler、worker的ChannelOption
                 final Channel channel, EventLoopGroup childGroup, ChannelHandler childHandler,
                 Entry<ChannelOption<?>, Object>[] childOptions, Entry<AttributeKey<?>, Object>[] childAttrs) {
             this.childGroup = childGroup;
@@ -197,16 +197,16 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
         @Override
         @SuppressWarnings("unchecked")
-        public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            final Channel child = (Channel) msg;
+        public void channelRead(ChannelHandlerContext ctx, Object msg) { // ChannelInboundHandler#channelRead
+            final Channel child = (Channel) msg; // NioSocketChannel
 
-            child.pipeline().addLast(childHandler);
+            child.pipeline().addLast(childHandler); // 给NioSocketChannel的ChannelPipeline添加自定义ChannelHandler
 
             setChannelOptions(child, childOptions, logger);
             setAttributes(child, childAttrs);
 
             try {
-                childGroup.register(child).addListener(new ChannelFutureListener() {
+                childGroup.register(child).addListener(new ChannelFutureListener() { // 先获取worker对应的EventLoopGroup，再注册任务到TaskQueue（轮询注册）
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {
                         if (!future.isSuccess()) {
