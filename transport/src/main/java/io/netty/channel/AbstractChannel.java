@@ -46,8 +46,8 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
     private final Channel parent;
     private final ChannelId id;
-    private final Unsafe unsafe;
-    private final DefaultChannelPipeline pipeline;
+    private final Unsafe unsafe; // Unsafe（NioServerSocketChannel为NioMessageUnsafe、NioSocketChannel为NioByteUnsafe）
+    private final DefaultChannelPipeline pipeline; // ChannelPipeline
     private final VoidChannelPromise unsafeVoidPromise = new VoidChannelPromise(this, false);
     private final CloseFuture closeFuture = new CloseFuture(this);
 
@@ -68,11 +68,11 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      * @param parent
      *        the parent of this channel. {@code null} if there's no parent.
      */
-    protected AbstractChannel(Channel parent) {
+    protected AbstractChannel(Channel parent) { // 实例化AbstractChannel
         this.parent = parent;
         id = newId();
-        unsafe = newUnsafe();
-        pipeline = newChannelPipeline();
+        unsafe = newUnsafe(); // 创建Unsafe（NioServerSocketChannel为NioMessageUnsafe、NioSocketChannel为NioByteUnsafe）
+        pipeline = newChannelPipeline(); // 创建DefaultChannelPipeline，并设置ChannelHandler头节点和尾接得按
     }
 
     /**
@@ -104,8 +104,8 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
     /**
      * Returns a new {@link DefaultChannelPipeline} instance.
      */
-    protected DefaultChannelPipeline newChannelPipeline() {
-        return new DefaultChannelPipeline(this);
+    protected DefaultChannelPipeline newChannelPipeline() { // 创建DefaultChannelPipeline，并设置ChannelHandler头节点和尾接得按
+        return new DefaultChannelPipeline(this); // 创建DefaultChannelPipeline，并设置ChannelHandler头节点和尾接得按
     }
 
     @Override
@@ -450,7 +450,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         }
 
         @Override
-        public final void register(EventLoop eventLoop, final ChannelPromise promise) {
+        public final void register(EventLoop eventLoop, final ChannelPromise promise) { // 注册任务到TaskQueue
             ObjectUtil.checkNotNull(eventLoop, "eventLoop");
             if (isRegistered()) {
                 promise.setFailure(new IllegalStateException("registered to an event loop already"));
@@ -468,7 +468,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 register0(promise);
             } else {
                 try {
-                    eventLoop.execute(new Runnable() {
+                    eventLoop.execute(new Runnable() { // 添加任务到taskQueue中
                         @Override
                         public void run() {
                             register0(promise);
@@ -493,16 +493,16 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
-                doRegister();
+                doRegister(); // 将channel注册到Selector多路复用器
                 neverRegistered = false;
                 registered = true;
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
-                pipeline.invokeHandlerAddedIfNeeded();
+                pipeline.invokeHandlerAddedIfNeeded(); // 调用ChannelPipeline的invokeHandlerAddedIfNeeded方法
 
                 safeSetSuccess(promise);
-                pipeline.fireChannelRegistered();
+                pipeline.fireChannelRegistered(); // 调用ChannelInboundHandler#channelRegistered方法
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
                 if (isActive()) {

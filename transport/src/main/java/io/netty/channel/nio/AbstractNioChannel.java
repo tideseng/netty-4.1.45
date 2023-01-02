@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Abstract base class for {@link Channel} implementations which use a Selector based approach.
  */
-public abstract class AbstractNioChannel extends AbstractChannel {
+public abstract class AbstractNioChannel extends AbstractChannel { // NioChannel抽象类，NioServerSocketChannel和NioSocketChannel都会继承该类
 
     private static final InternalLogger logger =
             InternalLoggerFactory.getInstance(AbstractNioChannel.class);
@@ -76,12 +76,12 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      * @param ch                the underlying {@link SelectableChannel} on which it operates
      * @param readInterestOp    the ops to set to receive data from the {@link SelectableChannel}
      */
-    protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
-        super(parent);
+    protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) { // 实例化AbstractNioChannel（NioServerSocketChannel和NioSocketChannel都会继承该类）
+        super(parent); // 创建AbstractChannel
         this.ch = ch;
         this.readInterestOp = readInterestOp;
         try {
-            ch.configureBlocking(false);
+            ch.configureBlocking(false); // 设置为非阻塞
         } catch (IOException e) {
             try {
                 ch.close();
@@ -373,11 +373,11 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     }
 
     @Override
-    protected void doRegister() throws Exception {
+    protected void doRegister() throws Exception { // 将channel注册到Selector多路复用器
         boolean selected = false;
         for (;;) {
             try {
-                selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
+                selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this); // 将channel注册到Selector多路复用器
                 return;
             } catch (CancelledKeyException e) {
                 if (!selected) {
