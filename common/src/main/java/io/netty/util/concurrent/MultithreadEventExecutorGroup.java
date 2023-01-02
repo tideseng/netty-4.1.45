@@ -54,8 +54,8 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
      * @param executor          the Executor to use, or {@code null} if the default should be used.
      * @param args              arguments which will passed to each {@link #newChild(Executor, Object...)} call
      */
-    protected MultithreadEventExecutorGroup(int nThreads, Executor executor, Object... args) {
-        this(nThreads, executor, DefaultEventExecutorChooserFactory.INSTANCE, args);
+    protected MultithreadEventExecutorGroup(int nThreads, Executor executor, Object... args) { // 实例化MultithreadEventExecutorGroup
+        this(nThreads, executor, DefaultEventExecutorChooserFactory.INSTANCE, args); // 实例化MultithreadEventExecutorGroup
     }
 
     /**
@@ -66,22 +66,22 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
      * @param chooserFactory    the {@link EventExecutorChooserFactory} to use.
      * @param args              arguments which will passed to each {@link #newChild(Executor, Object...)} call
      */
-    protected MultithreadEventExecutorGroup(int nThreads, Executor executor,
+    protected MultithreadEventExecutorGroup(int nThreads, Executor executor, // 最终都会通过该方法实例化MultithreadEventExecutorGroup
                                             EventExecutorChooserFactory chooserFactory, Object... args) {
         if (nThreads <= 0) {
             throw new IllegalArgumentException(String.format("nThreads: %d (expected: > 0)", nThreads));
         }
 
         if (executor == null) {
-            executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
+            executor = new ThreadPerTaskExecutor(newDefaultThreadFactory()); // 初始化线程池
         }
 
-        children = new EventExecutor[nThreads];
+        children = new EventExecutor[nThreads]; // 初始化定时任务线程池数组
 
-        for (int i = 0; i < nThreads; i ++) {
+        for (int i = 0; i < nThreads; i ++) { // 遍历线程数
             boolean success = false;
             try {
-                children[i] = newChild(executor, args);
+                children[i] = newChild(executor, args); // 赋值定时任务线程池数组元素NioEventLoop
                 success = true;
             } catch (Exception e) {
                 // TODO: Think about if this is a good exception type
@@ -133,8 +133,8 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     }
 
     @Override
-    public EventExecutor next() {
-        return chooser.next();
+    public EventExecutor next() { // 获取下一个EventLoop
+        return chooser.next(); // 获取下一个EventLoop
     }
 
     @Override

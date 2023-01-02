@@ -74,9 +74,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             AtomicReferenceFieldUpdater.newUpdater(
                     SingleThreadEventExecutor.class, ThreadProperties.class, "threadProperties");
 
-    private final Queue<Runnable> taskQueue;
+    private final Queue<Runnable> taskQueue; // 任务队列，netty早期版本使用自己实现的任务队列，后来全部替换为jctools的无锁化队列
 
-    private volatile Thread thread;
+    private volatile Thread thread; // 当前线程
     @SuppressWarnings("unused")
     private volatile ThreadProperties threadProperties;
     private final Executor executor;
@@ -157,18 +157,18 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         this.addTaskWakesUp = addTaskWakesUp;
         this.maxPendingTasks = Math.max(16, maxPendingTasks);
         this.executor = ThreadExecutorMap.apply(executor, this);
-        taskQueue = newTaskQueue(this.maxPendingTasks);
+        taskQueue = newTaskQueue(this.maxPendingTasks); // netty早期版本使用自己实现的任务队列，后来全部替换为jctools的无锁化队列
         rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
     }
 
-    protected SingleThreadEventExecutor(EventExecutorGroup parent, Executor executor,
-                                        boolean addTaskWakesUp, Queue<Runnable> taskQueue,
+    protected SingleThreadEventExecutor(EventExecutorGroup parent, Executor executor, // 实例化SingleThreadEventExecutor
+                                        boolean addTaskWakesUp, Queue<Runnable> taskQueue, // netty早期版本使用自己实现的任务队列，后来全部替换为jctools的无锁化队列
                                         RejectedExecutionHandler rejectedHandler) {
         super(parent);
         this.addTaskWakesUp = addTaskWakesUp;
         this.maxPendingTasks = DEFAULT_MAX_PENDING_EXECUTOR_TASKS;
         this.executor = ThreadExecutorMap.apply(executor, this);
-        this.taskQueue = ObjectUtil.checkNotNull(taskQueue, "taskQueue");
+        this.taskQueue = ObjectUtil.checkNotNull(taskQueue, "taskQueue"); // 任务队列
         this.rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
     }
 
@@ -341,18 +341,18 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * Add a task to the task queue, or throws a {@link RejectedExecutionException} if this instance was shutdown
      * before.
      */
-    protected void addTask(Runnable task) {
+    protected void addTask(Runnable task) { // 添加任务到taskQueue中
         ObjectUtil.checkNotNull(task, "task");
-        if (!offerTask(task)) {
+        if (!offerTask(task)) { // 添加任务到taskQueue中
             reject(task);
         }
     }
 
-    final boolean offerTask(Runnable task) {
+    final boolean offerTask(Runnable task) { // 添加任务到taskQueue中
         if (isShutdown()) {
             reject();
         }
-        return taskQueue.offer(task);
+        return taskQueue.offer(task); // 添加任务到taskQueue中
     }
 
     /**
@@ -367,14 +367,14 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      *
      * @return {@code true} if and only if at least one task was run
      */
-    protected boolean runAllTasks() {
+    protected boolean runAllTasks() { // 处理TaskQueue中的所有任务
         assert inEventLoop();
         boolean fetchedAll;
         boolean ranAtLeastOne = false;
 
         do {
             fetchedAll = fetchFromScheduledTaskQueue();
-            if (runAllTasksFrom(taskQueue)) {
+            if (runAllTasksFrom(taskQueue)) { // 处理TaskQueue中的所有任务
                 ranAtLeastOne = true;
             }
         } while (!fetchedAll); // keep on processing until we fetched all scheduled tasks.
@@ -420,13 +420,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * @return {@code true} if at least one task was executed.
      */
     protected final boolean runAllTasksFrom(Queue<Runnable> taskQueue) {
-        Runnable task = pollTaskFrom(taskQueue);
+        Runnable task = pollTaskFrom(taskQueue); // 获取任务
         if (task == null) {
             return false;
         }
         for (;;) {
-            safeExecute(task);
-            task = pollTaskFrom(taskQueue);
+            safeExecute(task); // 执行任务
+            task = pollTaskFrom(taskQueue); // 获取任务
             if (task == null) {
                 return true;
             }
@@ -813,9 +813,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     @Override
-    public void execute(Runnable task) {
+    public void execute(Runnable task) { // 添加任务到taskQueue中
         ObjectUtil.checkNotNull(task, "task");
-        execute(task, !(task instanceof LazyRunnable) && wakesUpForTask(task));
+        execute(task, !(task instanceof LazyRunnable) && wakesUpForTask(task)); // 添加任务到taskQueue中
     }
 
     @Override
@@ -824,8 +824,8 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     }
 
     private void execute(Runnable task, boolean immediate) {
-        boolean inEventLoop = inEventLoop();
-        addTask(task);
+        boolean inEventLoop = inEventLoop(); // 是否为当前线程
+        addTask(task); // 添加任务到taskQueue中
         if (!inEventLoop) {
             startThread();
             if (isShutdown()) {
