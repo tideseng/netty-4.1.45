@@ -61,8 +61,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private static final AtomicReferenceFieldUpdater<DefaultChannelPipeline, MessageSizeEstimator.Handle> ESTIMATOR =
             AtomicReferenceFieldUpdater.newUpdater(
                     DefaultChannelPipeline.class, MessageSizeEstimator.Handle.class, "estimatorHandle");
-    final AbstractChannelHandlerContext head;
-    final AbstractChannelHandlerContext tail;
+    final AbstractChannelHandlerContext head; // ChannelHandler头节点
+    final AbstractChannelHandlerContext tail; // ChannelHandler尾节点
 
     private final Channel channel;
     private final ChannelFuture succeededFuture;
@@ -89,13 +89,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
      */
     private boolean registered;
 
-    protected DefaultChannelPipeline(Channel channel) {
+    protected DefaultChannelPipeline(Channel channel) { // 实例化DefaultChannelPipeline
         this.channel = ObjectUtil.checkNotNull(channel, "channel");
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise =  new VoidChannelPromise(channel, true);
 
-        tail = new TailContext(this);
-        head = new HeadContext(this);
+        tail = new TailContext(this); // 创建ChannelHandler头节点
+        head = new HeadContext(this); // 创建ChannelHandler尾节点
 
         head.next = tail;
         tail.prev = head;
@@ -413,8 +413,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     @Override
-    public final ChannelPipeline remove(ChannelHandler handler) {
-        remove(getContextOrDie(handler));
+    public final ChannelPipeline remove(ChannelHandler handler) { // 移除当前节点
+        remove(getContextOrDie(handler)); // 移除当前节点
         return this;
     }
 
@@ -449,11 +449,11 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return (T) remove((AbstractChannelHandlerContext) ctx).handler();
     }
 
-    private AbstractChannelHandlerContext remove(final AbstractChannelHandlerContext ctx) {
+    private AbstractChannelHandlerContext remove(final AbstractChannelHandlerContext ctx) { // 移除当前节点
         assert ctx != head && ctx != tail;
 
         synchronized (this) {
-            atomicRemoveFromHandlerList(ctx);
+            atomicRemoveFromHandlerList(ctx); // 移除当前节点
 
             // If the registered is false it means that the channel was not registered on an eventloop yet.
             // In this case we remove the context from the pipeline and add a task that will call
@@ -481,7 +481,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     /**
      * Method is synchronized to make the handler removal from the double linked list atomic.
      */
-    private synchronized void atomicRemoveFromHandlerList(AbstractChannelHandlerContext ctx) {
+    private synchronized void atomicRemoveFromHandlerList(AbstractChannelHandlerContext ctx) { // 移除当前节点
         AbstractChannelHandlerContext prev = ctx.prev;
         AbstractChannelHandlerContext next = ctx.next;
         prev.next = next;
@@ -641,7 +641,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
-    final void invokeHandlerAddedIfNeeded() {
+    final void invokeHandlerAddedIfNeeded() { // 调用ChannelPipeline的invokeHandlerAddedIfNeeded方法
         assert channel.eventLoop().inEventLoop();
         if (firstRegistration) {
             firstRegistration = false;
@@ -811,8 +811,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     @Override
-    public final ChannelPipeline fireChannelRegistered() {
-        AbstractChannelHandlerContext.invokeChannelRegistered(head);
+    public final ChannelPipeline fireChannelRegistered() { // 调用ChannelInboundHandler#channelRegistered方法
+        AbstractChannelHandlerContext.invokeChannelRegistered(head); // 调用ChannelInboundHandler#channelRegistered方法
         return this;
     }
 
@@ -915,8 +915,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     @Override
-    public final ChannelPipeline fireChannelRead(Object msg) {
-        AbstractChannelHandlerContext.invokeChannelRead(head, msg);
+    public final ChannelPipeline fireChannelRead(Object msg) { // 遍历调用ChannelPipeline中(ChannelInboundHandler)ChannelHandler#channelRead方法
+        AbstractChannelHandlerContext.invokeChannelRead(head, msg); // 遍历调用ChannelPipeline中(ChannelInboundHandler)ChannelHandler#channelRead方法
         return this;
     }
 
@@ -1302,7 +1302,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
-    final class HeadContext extends AbstractChannelHandlerContext
+    final class HeadContext extends AbstractChannelHandlerContext // 头节点
             implements ChannelOutboundHandler, ChannelInboundHandler {
 
         private final Unsafe unsafe;
@@ -1378,9 +1378,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
 
         @Override
-        public void channelRegistered(ChannelHandlerContext ctx) {
+        public void channelRegistered(ChannelHandlerContext ctx) { // 头节点ChannelInboundHandler的channelRegistered方法
             invokeHandlerAddedIfNeeded();
-            ctx.fireChannelRegistered();
+            ctx.fireChannelRegistered(); // 调用后继节点的channelRegistered方法
         }
 
         @Override
