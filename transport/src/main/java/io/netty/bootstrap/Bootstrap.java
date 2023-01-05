@@ -151,15 +151,15 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
     /**
      * @see #connect()
      */
-    private ChannelFuture doResolveAndConnect(final SocketAddress remoteAddress, final SocketAddress localAddress) {
-        final ChannelFuture regFuture = initAndRegister();
+    private ChannelFuture doResolveAndConnect(final SocketAddress remoteAddress, final SocketAddress localAddress) { // 异步连接
+        final ChannelFuture regFuture = initAndRegister(); // 初始化Channel并注册任务到TaskQueue
         final Channel channel = regFuture.channel();
 
         if (regFuture.isDone()) {
             if (!regFuture.isSuccess()) {
                 return regFuture;
             }
-            return doResolveAndConnect0(channel, remoteAddress, localAddress, channel.newPromise());
+            return doResolveAndConnect0(channel, remoteAddress, localAddress, channel.newPromise()); // 建立链接
         } else {
             // Registration future is almost always fulfilled already, but just in case it's not.
             final PendingRegistrationPromise promise = new PendingRegistrationPromise(channel);
@@ -185,7 +185,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
         }
     }
 
-    private ChannelFuture doResolveAndConnect0(final Channel channel, SocketAddress remoteAddress,
+    private ChannelFuture doResolveAndConnect0(final Channel channel, SocketAddress remoteAddress, // 建立链接
                                                final SocketAddress localAddress, final ChannelPromise promise) {
         try {
             final EventLoop eventLoop = channel.eventLoop();
@@ -193,7 +193,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
 
             if (!resolver.isSupported(remoteAddress) || resolver.isResolved(remoteAddress)) {
                 // Resolver has no idea about what to do with the specified remote address or it's resolved already.
-                doConnect(remoteAddress, localAddress, promise);
+                doConnect(remoteAddress, localAddress, promise); // 建立链接
                 return promise;
             }
 
@@ -231,7 +231,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
         return promise;
     }
 
-    private static void doConnect(
+    private static void doConnect( // 建立链接
             final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise connectPromise) {
 
         // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
@@ -241,7 +241,7 @@ public class Bootstrap extends AbstractBootstrap<Bootstrap, Channel> {
             @Override
             public void run() {
                 if (localAddress == null) {
-                    channel.connect(remoteAddress, connectPromise);
+                    channel.connect(remoteAddress, connectPromise); // 建立链接
                 } else {
                     channel.connect(remoteAddress, localAddress, connectPromise);
                 }
