@@ -34,7 +34,7 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MultithreadEventLoopGroup.class);
 
-    private static final int DEFAULT_EVENT_LOOP_THREADS;
+    private static final int DEFAULT_EVENT_LOOP_THREADS; // 默认线程数为cpu核数的两倍
 
     static {
         DEFAULT_EVENT_LOOP_THREADS = Math.max(1, SystemPropertyUtil.getInt(
@@ -48,8 +48,8 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
     /**
      * @see MultithreadEventExecutorGroup#MultithreadEventExecutorGroup(int, Executor, Object...)
      */
-    protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... args) {
-        super(nThreads == 0 ? DEFAULT_EVENT_LOOP_THREADS : nThreads, executor, args);
+    protected MultithreadEventLoopGroup(int nThreads, Executor executor, Object... args) { // 实例化MultithreadEventLoopGroup
+        super(nThreads == 0 ? DEFAULT_EVENT_LOOP_THREADS : nThreads, executor, args); // 不指定线程数时，默认线程数为cpu核数的两倍
     }
 
     /**
@@ -74,16 +74,16 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
     }
 
     @Override
-    public EventLoop next() {
-        return (EventLoop) super.next();
+    public EventLoop next() { // 获取下一个EventLoop
+        return (EventLoop) super.next(); // 获取下一个EventLoop
     }
 
     @Override
     protected abstract EventLoop newChild(Executor executor, Object... args) throws Exception;
 
     @Override
-    public ChannelFuture register(Channel channel) {
-        return next().register(channel);
+    public ChannelFuture register(Channel channel) { // 注册任务到TaskQueue（轮询注册）
+        return next().register(channel); // 获取下一个EventLoop，并注册任务到TaskQueue
     }
 
     @Override
