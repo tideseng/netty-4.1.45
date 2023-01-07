@@ -59,8 +59,8 @@ import static io.netty.channel.ChannelHandlerMask.mask;
 abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, ResourceLeakHint {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractChannelHandlerContext.class);
-    volatile AbstractChannelHandlerContext next;
-    volatile AbstractChannelHandlerContext prev;
+    volatile AbstractChannelHandlerContext next; // 后继节点
+    volatile AbstractChannelHandlerContext prev; // 前驱节点
 
     private static final AtomicIntegerFieldUpdater<AbstractChannelHandlerContext> HANDLER_STATE_UPDATER =
             AtomicIntegerFieldUpdater.newUpdater(AbstractChannelHandlerContext.class, "handlerState");
@@ -139,12 +139,12 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     }
 
     @Override
-    public ChannelHandlerContext fireChannelRegistered() {
-        invokeChannelRegistered(findContextInbound(MASK_CHANNEL_REGISTERED));
+    public ChannelHandlerContext fireChannelRegistered() { // 调用后继节点的channelRegistered方法
+        invokeChannelRegistered(findContextInbound(MASK_CHANNEL_REGISTERED)); // 调用后继节点的channelRegistered方法
         return this;
     }
 
-    static void invokeChannelRegistered(final AbstractChannelHandlerContext next) {
+    static void invokeChannelRegistered(final AbstractChannelHandlerContext next) { // 调用ChannelInboundHandler#channelRegistered方法
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
             next.invokeChannelRegistered();
@@ -152,16 +152,16 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    next.invokeChannelRegistered();
+                    next.invokeChannelRegistered(); // 调用ChannelInboundHandler#channelRegistered方法
                 }
             });
         }
     }
 
-    private void invokeChannelRegistered() {
+    private void invokeChannelRegistered() { // 调用ChannelInboundHandler#channelRegistered方法
         if (invokeHandler()) {
             try {
-                ((ChannelInboundHandler) handler()).channelRegistered(this);
+                ((ChannelInboundHandler) handler()).channelRegistered(this); // 调用ChannelInboundHandler#channelRegistered方法
             } catch (Throwable t) {
                 notifyHandlerException(t);
             }
@@ -356,7 +356,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return this;
     }
 
-    static void invokeChannelRead(final AbstractChannelHandlerContext next, Object msg) {
+    static void invokeChannelRead(final AbstractChannelHandlerContext next, Object msg) { // 遍历调用ChannelPipeline中(ChannelInboundHandler)ChannelHandler#channelRead方法
         final Object m = next.pipeline.touch(ObjectUtil.checkNotNull(msg, "msg"), next);
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
@@ -511,12 +511,12 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     }
 
     @Override
-    public ChannelFuture connect(SocketAddress remoteAddress, ChannelPromise promise) {
-        return connect(remoteAddress, null, promise);
+    public ChannelFuture connect(SocketAddress remoteAddress, ChannelPromise promise) { // 建立链接
+        return connect(remoteAddress, null, promise); // 建立链接
     }
 
     @Override
-    public ChannelFuture connect(
+    public ChannelFuture connect( // 建立链接
             final SocketAddress remoteAddress, final SocketAddress localAddress, final ChannelPromise promise) {
         ObjectUtil.checkNotNull(remoteAddress, "remoteAddress");
 
@@ -525,10 +525,10 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             return promise;
         }
 
-        final AbstractChannelHandlerContext next = findContextOutbound(MASK_CONNECT);
-        EventExecutor executor = next.executor();
+        final AbstractChannelHandlerContext next = findContextOutbound(MASK_CONNECT); // connect事件对于客户端属于写操作也就是outbound事件
+        EventExecutor executor = next.executor(); // 从后往前遍历
         if (executor.inEventLoop()) {
-            next.invokeConnect(remoteAddress, localAddress, promise);
+            next.invokeConnect(remoteAddress, localAddress, promise); // 建立链接
         } else {
             safeExecute(executor, new Runnable() {
                 @Override
@@ -540,10 +540,10 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return promise;
     }
 
-    private void invokeConnect(SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) {
+    private void invokeConnect(SocketAddress remoteAddress, SocketAddress localAddress, ChannelPromise promise) { // 建立链接
         if (invokeHandler()) {
             try {
-                ((ChannelOutboundHandler) handler()).connect(this, remoteAddress, localAddress, promise);
+                ((ChannelOutboundHandler) handler()).connect(this, remoteAddress, localAddress, promise); // 建立链接
             } catch (Throwable t) {
                 notifyOutboundHandlerException(t, promise);
             }
@@ -904,7 +904,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return false;
     }
 
-    private AbstractChannelHandlerContext findContextInbound(int mask) {
+    private AbstractChannelHandlerContext findContextInbound(int mask) { // 获取后继节点
         AbstractChannelHandlerContext ctx = this;
         do {
             ctx = ctx.next;
